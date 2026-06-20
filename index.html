@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Join the List</title>
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f5f5f5;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+
+    .card {
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 2px 16px rgba(0, 0, 0, 0.08);
+      padding: 2.5rem 2rem;
+      width: 100%;
+      max-width: 420px;
+    }
+
+    h1 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: #111;
+      margin-bottom: 0.4rem;
+    }
+
+    p.subtitle {
+      font-size: 0.95rem;
+      color: #666;
+      margin-bottom: 1.75rem;
+    }
+
+    .field {
+      margin-bottom: 1rem;
+    }
+
+    label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: #444;
+      margin-bottom: 0.35rem;
+    }
+
+    input {
+      width: 100%;
+      padding: 0.65rem 0.85rem;
+      font-size: 1rem;
+      border: 1.5px solid #ddd;
+      border-radius: 8px;
+      outline: none;
+      transition: border-color 0.15s;
+      color: #111;
+    }
+
+    input:focus {
+      border-color: #4f46e5;
+    }
+
+    .name-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+    }
+
+    button {
+      width: 100%;
+      margin-top: 1.25rem;
+      padding: 0.75rem;
+      font-size: 1rem;
+      font-weight: 600;
+      color: #fff;
+      background: #4f46e5;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    button:hover:not(:disabled) {
+      background: #4338ca;
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .message {
+      margin-top: 1rem;
+      padding: 0.7rem 1rem;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      display: none;
+    }
+
+    .message.success {
+      background: #ecfdf5;
+      color: #065f46;
+      border: 1px solid #6ee7b7;
+    }
+
+    .message.duplicate {
+      background: #fffbeb;
+      color: #92400e;
+      border: 1px solid #fcd34d;
+    }
+
+    .message.error {
+      background: #fef2f2;
+      color: #991b1b;
+      border: 1px solid #fca5a5;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Join the List</h1>
+    <p class="subtitle">Enter your details below and we'll be in touch.</p>
+
+    <form id="invite-form" novalidate>
+      <div class="name-row">
+        <div class="field">
+          <label for="first-name">First Name</label>
+          <input type="text" id="first-name" name="firstName" placeholder="Jane" required />
+        </div>
+        <div class="field">
+          <label for="last-name">Last Name</label>
+          <input type="text" id="last-name" name="lastName" placeholder="Doe" required />
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="email">Email Address</label>
+        <input type="email" id="email" name="email" placeholder="jane@example.com" required />
+      </div>
+
+      <button type="submit" id="submit-btn">Join the List</button>
+    </form>
+
+    <div class="message" id="message"></div>
+  </div>
+
+  <script>
+    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwkRI0hK9BokM8MgDpMpgVCJv6q2r3m01NW159EzmQi6z44GGqSHxr8oUcikxl1BlA/exec";
+
+    const form = document.getElementById("invite-form");
+    const btn = document.getElementById("submit-btn");
+    const msg = document.getElementById("message");
+
+    function showMessage(text, type) {
+      msg.textContent = text;
+      msg.className = "message " + type;
+      msg.style.display = "block";
+    }
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const firstName = form.firstName.value.trim();
+      const lastName = form.lastName.value.trim();
+      const email = form.email.value.trim();
+
+      if (!firstName || !lastName || !email) {
+        showMessage("Please fill in all fields.", "error");
+        return;
+      }
+
+      const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailPattern.test(email)) {
+        showMessage("Please enter a valid email address.", "error");
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = "Submitting…";
+      msg.style.display = "none";
+
+      try {
+        const res = await fetch(APPS_SCRIPT_URL, {
+          method: "POST",
+          body: JSON.stringify({ firstName, lastName, email }),
+        });
+
+        const data = await res.json();
+
+        if (data.status === "success") {
+          showMessage("Thanks, you're on the list!", "success");
+          form.reset();
+        } else if (data.status === "duplicate") {
+          showMessage("You're already on the list!", "duplicate");
+        } else {
+          showMessage("Something went wrong. Please try again.", "error");
+        }
+      } catch (err) {
+        showMessage("Something went wrong. Please try again.", "error");
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Join the List";
+      }
+    });
+  </script>
+</body>
+</html>
