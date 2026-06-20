@@ -206,6 +206,7 @@
           showMessage("Something went wrong. Please try again.", "error");
         }
       } catch (err) {
+        console.error("Submission error:", err);
         showMessage("Something went wrong. Please try again.", "error");
       } finally {
         btn.disabled = false;
