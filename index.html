@@ -70,6 +70,21 @@
       border-color: #4f46e5;
     }
 
+    input.invalid {
+      border-color: #ef4444;
+    }
+
+    input.invalid:focus {
+      border-color: #ef4444;
+    }
+
+    .field-error {
+      font-size: 0.78rem;
+      color: #ef4444;
+      margin-top: 0.3rem;
+      display: none;
+    }
+
     .name-row {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -136,16 +151,19 @@
         <div class="field">
           <label for="first-name">First Name</label>
           <input type="text" id="first-name" name="firstName" placeholder="Jane" required />
+          <span class="field-error" id="first-name-error">First name is required.</span>
         </div>
         <div class="field">
           <label for="last-name">Last Name</label>
           <input type="text" id="last-name" name="lastName" placeholder="Doe" required />
+          <span class="field-error" id="last-name-error">Last name is required.</span>
         </div>
       </div>
 
       <div class="field">
         <label for="email">Email Address</label>
         <input type="email" id="email" name="email" placeholder="jane@example.com" required />
+        <span class="field-error" id="email-error">Please enter a valid email address.</span>
       </div>
 
       <button type="submit" id="submit-btn">Join the List</button>
@@ -160,6 +178,63 @@
     const form = document.getElementById("invite-form");
     const btn = document.getElementById("submit-btn");
     const msg = document.getElementById("message");
+    const emailInput = document.getElementById("email");
+    const emailError = document.getElementById("email-error");
+    const firstNameInput = document.getElementById("first-name");
+    const firstNameError = document.getElementById("first-name-error");
+    const lastNameInput = document.getElementById("last-name");
+    const lastNameError = document.getElementById("last-name-error");
+
+    const emailPattern = /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/;
+
+    function setFieldValid(input, errorEl, valid) {
+      if (valid) {
+        input.classList.remove("invalid");
+        errorEl.style.display = "none";
+      } else {
+        input.classList.add("invalid");
+        errorEl.style.display = "block";
+      }
+    }
+
+    function setEmailValid(valid, empty = false) {
+      emailError.textContent = empty ? "Email address is required." : "Please enter a valid email address.";
+      setFieldValid(emailInput, emailError, valid);
+    }
+
+    function addRequiredValidation(input, errorEl) {
+      input.addEventListener("blur", () => {
+        setFieldValid(input, errorEl, input.value.trim() !== "");
+      });
+      input.addEventListener("input", () => {
+        if (input.classList.contains("invalid")) {
+          setFieldValid(input, errorEl, input.value.trim() !== "");
+        }
+      });
+    }
+
+    addRequiredValidation(firstNameInput, firstNameError);
+    addRequiredValidation(lastNameInput, lastNameError);
+
+    emailInput.addEventListener("blur", () => {
+      const val = emailInput.value.trim();
+      if (!val) {
+        setEmailValid(false, true);
+      } else {
+        setEmailValid(emailPattern.test(val));
+      }
+    });
+
+    emailInput.addEventListener("input", () => {
+      if (emailInput.classList.contains("invalid")) {
+        const val = emailInput.value.trim();
+        if (!val) {
+          setEmailValid(false, true);
+        } else {
+          setEmailValid(emailPattern.test(val));
+        }
+      }
+    });
 
     function showMessage(text, type) {
       msg.textContent = text;
@@ -172,18 +247,18 @@
 
       const firstName = form.firstName.value.trim();
       const lastName = form.lastName.value.trim();
-      const email = form.email.value.trim();
+      const email = emailInput.value.trim();
 
-      if (!firstName || !lastName || !email) {
-        showMessage("Please fill in all fields.", "error");
-        return;
-      }
+      let hasError = false;
+      if (!firstName) { setFieldValid(firstNameInput, firstNameError, false); hasError = true; }
+      if (!lastName)  { setFieldValid(lastNameInput, lastNameError, false);   hasError = true; }
+      if (!email) { setEmailValid(false, true); hasError = true; }
+      else if (!emailPattern.test(email)) { setEmailValid(false); hasError = true; }
+      if (hasError) return;
 
-      const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailPattern.test(email)) {
-        showMessage("Please enter a valid email address.", "error");
-        return;
-      }
+      setFieldValid(firstNameInput, firstNameError, true);
+      setFieldValid(lastNameInput, lastNameError, true);
+      setEmailValid(true);
 
       btn.disabled = true;
       btn.textContent = "Submitting…";
