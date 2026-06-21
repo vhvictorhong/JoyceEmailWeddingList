@@ -4,6 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Join the List</title>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-763FEJ9D2L"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-763FEJ9D2L');
+  </script>
   <style>
     *, *::before, *::after {
       box-sizing: border-box;
@@ -250,10 +258,10 @@
       const email = emailInput.value.trim();
 
       let hasError = false;
-      if (!firstName) { setFieldValid(firstNameInput, firstNameError, false); hasError = true; }
-      if (!lastName)  { setFieldValid(lastNameInput, lastNameError, false);   hasError = true; }
-      if (!email) { setEmailValid(false, true); hasError = true; }
-      else if (!emailPattern.test(email)) { setEmailValid(false); hasError = true; }
+      if (!firstName) { setFieldValid(firstNameInput, firstNameError, false); hasError = true; gtag('event', 'form_error', { field: 'first_name' }); }
+      if (!lastName)  { setFieldValid(lastNameInput, lastNameError, false);   hasError = true; gtag('event', 'form_error', { field: 'last_name' }); }
+      if (!email) { setEmailValid(false, true); hasError = true; gtag('event', 'form_error', { field: 'email_missing' }); }
+      else if (!emailPattern.test(email)) { setEmailValid(false); hasError = true; gtag('event', 'form_error', { field: 'email_invalid' }); }
       if (hasError) return;
 
       setFieldValid(firstNameInput, firstNameError, true);
@@ -275,10 +283,13 @@
         if (data.status === "success") {
           showMessage("Thanks, you're on the list!", "success");
           form.reset();
+          gtag('event', 'sign_up', { method: 'wedding_form' });
         } else if (data.status === "duplicate") {
           showMessage("You're already on the list!", "duplicate");
+          gtag('event', 'sign_up_duplicate', { method: 'wedding_form' });
         } else {
           showMessage("Something went wrong. Please try again.", "error");
+          gtag('event', 'sign_up_error', { method: 'wedding_form' });
         }
       } catch (err) {
         console.error("Submission error:", err);
